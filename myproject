@@ -1,0 +1,673 @@
+from _future_ import with_statement 
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from pywinauto import Desktop
+from word2number import w2n
+import tkinter as tk
+from threading import Thread
+from tkinter import font
+import pywinauto
+import pyttsx3  
+import speech_recognition as sr  
+import datetime 
+import wikipedia 
+import webbrowser 
+import socket
+import imaplib
+import os 
+import random 
+import pywhatkit as kit 
+import sys 
+import pyautogui 
+import time 
+import operator 
+import requests 
+import pygetwindow as gw
+import cv2
+import win32com.client as win32
+import re
+import screen_brightness_control as sbc
+import threading
+import keyboard
+import psutil
+
+engine = pyttsx3.init('sapi5') 
+screen_width, screen_height = pyautogui.size()
+HORIZONTAL_BLOCKS = 34
+VERTICAL_BLOCKS = 19
+BLOCK_SIZE_HORIZONTAL = screen_width/HORIZONTAL_BLOCKS 
+BLOCK_SIZE_VERTICAL = screen_height/VERTICAL_BLOCKS
+GRID_WIDTH = 34  # Horizontal grid units
+GRID_HEIGHT = 19  # Vertical grid units
+SMALL_STEP_HORIZONTAL = BLOCK_SIZE_HORIZONTAL / 2
+SMALL_STEP_VERTICAL = BLOCK_SIZE_VERTICAL / 2
+UNIT_SIZE = 55
+strip_window=None
+
+special_keys = {
+        'space': 'space',
+        'enter': 'enter',
+        'tab': 'tab',
+        'backspace': 'backspace',
+        'delete': 'delete',
+        'escape': 'esc',
+        'left arrow': 'left',
+        'right arrow': 'right',
+        'up arrow': 'up',
+        'down arrow': 'down',
+        'capslock':'capslock',
+        'control':'ctrl',
+        'ctrl':'ctrl',
+        'shift':'shift',
+        'alternate':'alt',
+        'alt':'alt',
+        'function':'fn',
+        'hash': '#',
+        'at': '@',
+        'exclamation': '!',
+        'dollar': '$',
+        'percent': '%',
+        'caret': '^',
+        'ampersand': '&',
+        'asterisk': '*',
+        'round bracket open':'(',
+        'round bracket close':')',
+        'plus':'+',
+        'underscore':'_',
+        'equal':'=',
+        'curly braces open':'{',
+        'curly braces close':'}',
+        'colon':':',
+        'coma':',',
+        'semicolon':';',
+        'oblique':'/',
+        'slash':'/',
+        'full stop':'.',
+        'circumflex':'^',
+        'question mark':'?',
+        'square bracket open':'[',
+        'square bracket close':']',
+        'dot':'.',
+        'vertical line':'|',
+        'vertical slash':'|',
+        'backslash':'\\',
+        'double quotes':'"',
+        'not symbol':'~',
+        'backtick':'`',
+        'one':'1',
+        'two':'2',
+        'three':'3',
+        'four':'4',
+        'five':'5',
+        'six':'6',
+        'seven':'7',
+        'eight':'8',
+        'nine':'9',
+        'zero':'0',
+        '1':'1',
+        '2':'2',
+        '3':'3',
+        '4':'4',
+        '5':'5',
+        '6':'6',
+        '7':'7',
+        '8':'8',
+        '9':'9',
+        '0':'0',
+        'a': 'a',
+        'b': 'b',
+        'c': 'c',
+        'd': 'd',
+        'e': 'e',
+        'f': 'f',
+        'g': 'g',
+        'h': 'h',
+        'i': 'i',
+        'j': 'j',
+        'k': 'k',
+        'l': 'l',
+        'm': 'm',
+        'n': 'n',
+        'o': 'o',
+        'p': 'p',
+        'q': 'q',
+        'r': 'r',
+        's': 's',
+        't': 't',
+        'u': 'u',
+        'v': 'v',
+        'w': 'w',
+        'x': 'x',
+        'y': 'y',
+        'z': 'z',
+        'F1':'f1',
+        'F2':'f2',
+        'F3':'f3',
+        'F4':'f4',
+        'F5':'f5',
+        'F6':'f6',
+        'F7':'f7',
+        'F8':'f8',
+        'F9':'f9',
+        'F10':'f10',
+        'F11':'f11',
+        'F12':'f12',
+
+        # Add more mappings as needed
+    }
+
+def press_key(key):
+    pyautogui.press(key)
+    speak(f"{key} key pressed")
+
+def create_transparent_strip():
+    global strip_window
+
+    strip_window = tk.Tk()
+    strip_window.attributes('-alpha', 0.5)  # Set transparency
+    strip_window.attributes('-topmost', True)  # Keep the window on top
+    strip_window.overrideredirect(True)  # Remove window borders
+    # Set the size of the window to cover the screen
+    screen_width = strip_window.winfo_screenwidth()
+    screen_height = strip_window.winfo_screenheight()
+    strip_window.geometry(f'{screen_width}x{screen_height}+0+0')
+
+    # Create a canvas to draw the grid
+    canvas = tk.Canvas(strip_window, width=screen_width, height=screen_height)
+    canvas.pack()
+
+    # Draw the grid lines
+    for i in range(0, screen_width, UNIT_SIZE):
+        canvas.create_line(i, 0, i, screen_height, fill='blue')
+    for i in range(0, screen_height, UNIT_SIZE):
+        canvas.create_line(0, i, screen_width, i, fill='blue')
+
+    # Add numbers to the grid boxes
+    cursor_x, cursor_y = pyautogui.position()
+    for x in range(0, screen_width, UNIT_SIZE):
+        for y in range(0, screen_height, UNIT_SIZE):
+            # Calculate the number based on cursor position and grid box position
+            num = abs((cursor_x - x) // UNIT_SIZE) + abs((cursor_y - y) // UNIT_SIZE) #+ 1
+            canvas.create_text(x + UNIT_SIZE // 2, y + UNIT_SIZE // 2, text=str(num), fill='blue')
+
+    strip_window.mainloop()
+def show_transparent_strip():
+    thread = Thread(target=create_transparent_strip)
+    thread.start()
+
+def hide_transparent_strip():
+    global strip_window
+    if strip_window:
+        strip_window.quit()
+        #strip_window = None
+    
+voices = engine.getProperty('voices') 
+engine.setProperty('voice', voices[0].id) 
+engine.setProperty('rate', 150) 
+
+def speak(audio): 
+    engine.say(audio) 
+    engine.runAndWait()
+
+def move_cursor(blocks_right, blocks_down, small_step=False):
+    current_x, current_y = pyautogui.position()
+    if small_step:
+        new_x = current_x + blocks_right * SMALL_STEP_HORIZONTAL
+        new_y = current_y + blocks_down * SMALL_STEP_VERTICAL
+    else:
+        new_x = current_x + blocks_right * BLOCK_SIZE_HORIZONTAL
+        new_y = current_y + blocks_down * BLOCK_SIZE_VERTICAL
+    pyautogui.moveTo(new_x, new_y, 0.5)
+
+# Function to handle commands
+def handle_command(command):
+    try:
+        moves = re.findall(r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty) blocks (right|left|up|down)", command)
+        if moves:
+            for num_blocks, direction in moves:
+                if num_blocks.isdigit():
+                    num_blocks = int(num_blocks)
+                else:
+                    num_blocks = w2n.word_to_num(num_blocks)
+                
+                if direction == "right":
+                    move_cursor(num_blocks, 0)
+                elif direction == "left":
+                    move_cursor(-num_blocks, 0)
+                elif direction == "up":
+                    move_cursor(0, -num_blocks)
+                elif direction == "down":
+                    move_cursor(0, num_blocks)
+                speak(f"Moving {num_blocks} blocks {direction}")
+        elif "shift" in command and "little" in command:
+            if "right" in command:
+                move_cursor(1, 0, small_step=True)
+            elif "left" in command:
+                move_cursor(-1, 0, small_step=True)
+            elif "up" in command:
+                move_cursor(0, -1, small_step=True)
+            elif "down" in command:
+                move_cursor(0, 1, small_step=True)
+            speak("Shifting a little")
+        else:
+            speak("Invalid command. Please try again.")
+    except Exception as e:
+        speak(f"An error occurred: {str(e)}")
+
+def set_volume_level(volume_level):
+    devices = AudioUtilities.GetSpeakers()
+    interface = devices.Activate(
+        IAudioEndpointVolume.iid, CLSCTX_ALL, None)
+    volume = cast(interface, POINTER(IAudioEndpointVolume))
+
+    # Convert volume_level from 0-100 to float between 0.0 and 1.0
+    volume.SetMasterVolumeLevelScalar(volume_level / 100.0, None)
+    speak(f"Volume set to {volume_level} percent")
+
+def get_volume_level():
+    devices = AudioUtilities.GetSpeakers()
+    interface = devices.Activate(
+        IAudioEndpointVolume.iid, CLSCTX_ALL, None)
+    volume = cast(interface, POINTER(IAudioEndpointVolume))
+    current_volume = volume.GetMasterVolumeLevelScalar() * 100
+    return current_volume
+
+def take_volume_command():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening for volume level...")
+        r.pause_threshold = 1
+        audio = r.listen(source)
+    try:
+        print("Recognizing...")
+        query = r.recognize_google(audio, language='en-in')
+        print(f"User said: {query}\n")
+        return query
+    except Exception as e:
+        print("Say that again please...")
+        return None
+    
+def wishMe(): 
+    hour = int(datetime.datetime.now().hour) 
+    if hour>=0 and hour<12: 
+        speak("Good Morning!") 
+    elif hour>=12 and hour<18: 
+        speak("Good Afternoon!")    
+    else: 
+        speak("Good Evening!") 
+    speak("Ready to Comply. I am in sleep mode right now. Say wake up in hindi to wake me up.") 
+
+def takeCommand(): 
+    r = sr.Recognizer() 
+    with sr.Microphone() as source: 
+        print("Listening...") 
+        r.pause_threshold = 1 
+        audio = r.listen(source, timeout=None, phrase_time_limit=6) 
+    try: 
+        print("Recognizing...")     
+        query = r.recognize_google(audio, language='en-in') 
+        print(f"User said: {query}\n") 
+    except Exception as e:     
+        print("Say that again please...")   
+        return "None" 
+    return query 
+
+def press_special_character(character):
+    if character in special_keys:
+        press_key(special_keys[character])
+    else:
+        speak('Key not available')
+    
+def get_active_window():
+    return gw.getActiveWindow()
+
+def parse_movement(action):
+    words = action.split()
+    direction = words[2]
+    steps = int(words[1])
+    return direction, steps
+
+def move_blocks_right(steps):
+    pyautogui.moveRel(steps * 10, 0)
+
+def move_blocks_down(steps):
+    pyautogui.moveRel(0, steps * 10)
+
+def scroll_window(amount):
+    active_window = gw.getActiveWindow()
+    if active_window:
+        active_window.activate()
+        pyautogui.scroll(amount)
+        return True
+    return False
+
+def modify_block_counts():
+    # Modify horizontal blocks
+    speak("Please specify the new number of horizontal blocks.")
+    query = takeCommand().lower()
+    if not query.isdigit():
+        speak("Please tell me the new number of horizontal blocks.")
+        query = takeCommand().lower()
+        if not query.isdigit():
+            speak("Sorry, modification not done")
+            return
+    else:
+        HORIZONTAL_BLOCKS=int(query)
+    
+    # Modify vertical blocks
+    speak("Please specify the new number of vertical blocks.")
+    query = takeCommand().lower()
+    if not query.isdigit():
+        speak("Please tell me the new number of vertical blocks.")
+        query=takeCommand().lower()
+        if not query.isdigit():
+            speak("Sorry, modification not done")
+            return
+    else:
+        VERTICAL_BLOCKS=int(query)
+    
+    speak("Updated number of horizontal blocks is {horizontal_blocks}")
+    speak("Updated number of vertical blocks is {vertical_blocks}")
+
+def press_combination_keys(key1,key2):
+    if key1 in special_keys and key2 in special_keys:
+        pyautogui.keyDown(key1)
+        pyautogui.press(key2)
+        pyautogui.keyUp(key1)
+    else:
+        speak("Not possible")
+
+if _name_ == "_main_": 
+    wishMe() 
+    WAKE_WORD = "uth jao"
+    SLEEP_WORD = "so jao"
+    active=False
+    while True: 
+        query = takeCommand().lower()
+        if WAKE_WORD in query:
+            active = True
+            speak("I am awake and ready to assist.")
+        
+        if SLEEP_WORD in query:
+            active = False
+            speak("I am going to sleep now.")
+        
+        if active:
+
+            active_window=get_active_window()
+            if not active_window:
+                speak("No active window detected.")
+                continue
+            
+            if "modify" in query and "grid" in query:
+                modify_block_counts()
+
+            elif "press" in query and "+" in query:
+                try:
+                    key1, key2 = query.replace("press ", "").split(" + ")
+                    key1=special_keys.get(key1.strip())
+                    key2=special_keys.get(key2.strip())
+                    # Convert spoken keys to recognized keys
+                    press_combination_keys(key1, key2)
+                except:
+                    print("Try again")
+                    speak("Try again")
+
+            elif "search" in query and "google" in query:
+                speak("What should I search for?")
+                query=takeCommand().lower()
+                if query is not None:
+                    url=f"https://www.google.com/search?q={query}"
+                    webbrowser.open(url)
+
+            elif "open" in query and "whatsapp" in query:
+                pyautogui.hotkey('win')
+                time.sleep(1)
+                pyautogui.write('WhatsApp')
+                time.sleep(1)
+                pyautogui.press('enter')
+                time.sleep(1)
+
+            elif "open" in query and "youtube" in query:
+                webbrowser.open("https://www.youtube.com")
+
+            elif "switch" in query and "tab" in query:
+                pyautogui.keyDown('alt')
+                pyautogui.press('tab')
+                speak("Say next to navigate through all the windows")
+                while True:
+                    query=takeCommand().lower()
+                    if "next" not in query:
+                        break
+                    else:
+                        pyautogui.press('tab')
+                pyautogui.keyUp('alt')
+
+            elif "press" in query and "+" not in query:
+                character = query.replace("press ", "").strip()
+                press_special_character(character)
+
+            elif "open" in query and "settings" in query:
+                pyautogui.hotkey('win','i')
+
+            elif query.startswith('move'):
+                handle_command(query)
+
+            elif query.startswith('shift'):
+                handle_command(query)
+
+            elif "single" in query and "click" in query:
+                current_x, current_y = pyautogui.position()
+                pyautogui.click(x=current_x, y=current_y, clicks=1, interval=0, button='left')
+
+            elif "show" in query and "grid" in query:
+                show_transparent_strip()
+
+            elif "hide" in query and "grid" in query:
+                hide_transparent_strip()
+                continue
+
+            elif "double" in query and "click" in query:
+                current_x, current_y = pyautogui.position()
+                pyautogui.click(x=current_x, y=current_y, clicks=2, interval=0, button='left')
+
+            elif "right" in query and "click" in query:
+                current_x, current_y = pyautogui.position()
+                pyautogui.click(x=current_x, y=current_y, clicks=1, interval=0, button='right')
+
+            elif "search" in query and "file" in query:
+                pyautogui.hotkey('win','e')
+                time.sleep(0.5)
+                pyautogui.hotkey('alt','space')
+                time.sleep(0.5)
+                pyautogui.press('x')
+                time.sleep(1)
+                pyautogui.hotkey('ctrl','f')
+                speak('Tell me the name of the file please')
+                query=takeCommand().lower()
+                pyautogui.write(query)
+
+            elif query.startswith("move"):
+                handle_command(query)
+
+            elif "battery" in query and "status" in query:
+                battery = psutil.sensors_battery()
+                plugged = battery.power_plugged
+                percent = battery.percent
+                if plugged:
+                    speak(f"Your system is plugged in and the battery is at {percent} percent.")
+                else:
+                    speak(f"Your system is not plugged in and the battery is at {percent} percent.")
+
+            elif "volume" in query and "to" in query:
+                try:
+                    volume_level = int(query.split()[-1])
+                    if 0 <= volume_level <= 100:
+                        set_volume_level(volume_level)
+                    else:
+                        speak("Volume level must be between 0 and 100")
+                except ValueError:
+                    speak("Please say the volume level again.")
+
+            elif "hold" in query and "left" in query:
+                pyautogui.mouseDown()
+
+            elif "release" in query and "left" in query:
+                pyautogui.mouseUp()
+
+            elif "open" in query and "calculator" in query:
+                os.system("calc")
+
+            elif 'take screenshot' in query:
+                pyautogui.keyDown('win')
+                pyautogui.press('printscreen')
+                pyautogui.keyUp('win')
+
+            elif "open" in query and "youtube" in query: 
+                speak("what you will like to watch ?") 
+                qrry = takeCommand().lower() 
+                kit.playonyt(f"{qrry}") 
+
+            elif "open" in query and "desktop" in query:
+                pyautogui.hotkey('win','d')
+                time.sleep(1)
+
+            elif "close" in query and "window" in query:
+                pyautogui.hotkey('alt','f4')
+
+            elif "maximize" in query and "window" in query: 
+                pyautogui.hotkey('alt', 'space') 
+                time.sleep(1) 
+                pyautogui.press('x') 
+
+            elif 'open new window' in query: 
+                pyautogui.hotkey('ctrl', 'n') 
+
+            elif "minimise" in query and "window" in query: 
+                pyautogui.hotkey('alt', 'space') 
+                time.sleep(1) 
+                pyautogui.press('n') 
+
+            elif 'previous tab' in query: 
+                time.sleep(0.5)
+                pyautogui.hotkey('ctrl', 'shift', 'tab') 
+
+            elif 'next tab' in query: 
+                pyautogui.hotkey('ctrl', 'tab') 
+
+            elif 'close tab' in query: 
+                pyautogui.hotkey('ctrl', 'w')
+
+            elif 'next video' in query:
+                pyautogui.hotkey('shift','n') 
+
+            elif 'close window' in query: 
+                pyautogui.hotkey('ctrl', 'shift', 'w') 
+
+            elif 'close chrome' in query: 
+                os.system("taskkill /f /im chrome.exe")
+
+            elif 'the time' in query: 
+                strTime = datetime.datetime.now().strftime("%H:%M:%S")     
+                speak(f"Sir, the time is {strTime}") 
+
+            elif "shutdown the system" in query: 
+                speak("Are you sure you want to shut down the system?")
+                response = takeCommand().lower()
+                if 'yes' in response:
+                    os.system("shutdown /s /t 5")
+                else:
+                    speak("Shutdown cancelled")
+
+            elif "restart the system" in query: 
+                speak("Are you sure you want to restart the system?")
+                response=takeCommand().lower()
+                if 'yes' in response:
+                    os.system("shutdown /r /t 5")
+                else:
+                    speak("Restart cancelled")
+
+            elif "Lock the system" in query: 
+                os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0") 
+
+            elif "open notepad" in query: 
+                npath = "C:\WINDOWS\system32\\notepad.exe"     
+                os.startfile(npath) 
+
+            elif "close notepad" in query: 
+                os.system("taskkill /f /im notepad.exe") 
+
+            elif "brightness" in query and "to" in query:
+                # Extract brightness level and set brightness
+                level = query.replace("set brightness to", "").strip()
+                try:
+                    brightness = int(level)
+                except ValueError:
+                    try:
+                        brightness = w2n.word_to_num(level)
+                    except:
+                        print("Invalid brightness level")
+                sbc.set_brightness(brightness)
+                print(f"Brightness set to {brightness}%")
+
+            elif "open command prompt" in query: 
+                os.system("start cmd") 
+
+            elif "close command prompt" in query: 
+                os.system("taskkill /f /im cmd.exe") 
+
+            elif 'scroll down' in query:
+                if scroll_window(-500):
+                    speak("Scrolled down")
+                else:
+                    speak("Could not find an active window to scroll")
+
+            elif "mute" in query: 
+                pyautogui.press("volumemute") 
+
+            elif "pause video" in query:
+                pyautogui.press('k')
+                speak('Video paused')
+
+            elif "play video" in query:
+                pyautogui.press('k')
+
+            elif 'scroll up' in query:
+                if scroll_window(500):
+                    speak("Scrolled up")
+                else:
+                    speak("Could not find an active window to scroll")
+            
+            elif "search item" in query:
+                pyautogui.hotkey('win')
+                speak("Type the item name")
+
+            elif "take photo" in query:
+                pyautogui.hotkey('win')
+                pyautogui.write('Camera')
+                pyautogui.press('enter')
+                time.sleep(3)
+                speak('Taking photo in 5 4 3 2 1')
+                pyautogui.press('enter')
+
+            elif "who are you" in query: 
+                print('My Name Is DARK, D for Debashish, A for Amar, R for Rajesh, K for Krish') 
+                speak('My Name Is DARK, D for Debashish, A for Amar, R for Rajesh, K for Krish') 
+                print('I can Do Everything that my creators programmed me to do') 
+                speak('I can Do Everything that my creators programmed me to do') 
+
+            elif "who created you" in query: 
+                print('Debashish, Amar, Rajesh and Krish created me with Python Language, in Visual Studio Code.') 
+                speak('Debashish, Amar, Rajesh and Krish created me with Python Language, in Visual Studio Code.') 
+
+            elif 'type' in query: #10 
+                query = query.replace("type ", "") 
+                pyautogui.write(f"{query}") 
+
+            elif 'exit' in query: 
+                speak('Exiting, have a great day!')
+                sys.exit()
